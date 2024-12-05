@@ -1,3 +1,4 @@
+import { NextUIProvider } from '@nextui-org/react';
 import {
   isRouteErrorResponse,
   Links,
@@ -41,9 +42,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </head>
 
       <body suppressHydrationWarning>
-        {children}
-        <ScrollRestoration />
-        <Scripts />
+        <NextUIProvider>
+          {children}
+          <ScrollRestoration />
+          <Scripts />
+        </NextUIProvider>
       </body>
     </html>
   );
