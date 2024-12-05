@@ -24,7 +24,7 @@ export function meta({}: Route.MetaArgs) {
 export default function SignIn() {
   return (
     <main>
-      <section className="flex h-screen w-full items-center justify-center">
+      <section className="flex h-[calc(100vh-4rem-1px)] w-full items-center justify-center px-6">
         <Card className="w-[30rem] p-2">
           <CardBody>
             <h1 className="mb-8 text-4xl font-bold">Sign in</h1>

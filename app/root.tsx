@@ -7,6 +7,7 @@ import {
   Scripts,
   ScrollRestoration,
 } from 'react-router';
+import Header from '~/components/header';
 import type { Route } from './+types/root';
 import stylesheet from './app.css?url';
 
@@ -43,6 +44,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
       <body suppressHydrationWarning>
         <NextUIProvider>
+          <Header />
           {children}
           <ScrollRestoration />
           <Scripts />
