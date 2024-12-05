@@ -1,0 +1,11 @@
+# Node.js dependencies
+node_modules
+
+# React Router
+.react-router
+
+# Build
+build
+
+# Development container
+.devcontainer
