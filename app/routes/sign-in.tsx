@@ -4,6 +4,7 @@ import { Chip } from '@nextui-org/chip';
 import { Input } from '@nextui-org/input';
 import { Link } from '@nextui-org/link';
 import argon2 from 'argon2';
+import jwt from 'jsonwebtoken';
 import { redirect, useFetcher } from 'react-router';
 import { z } from 'zod';
 import FieldError from '~/components/field-error';
@@ -29,6 +30,12 @@ export function meta({}: Route.MetaArgs) {
  * @param {Route.ActionArgs} request - The incoming request.
  */
 export async function action({ request }: Route.ActionArgs) {
+  const SECRET_KEY = process.env.SECRET_KEY;
+
+  if (!SECRET_KEY) {
+    throw new Error('SECRET_KEY is not set');
+  }
+
   const formData = await request.formData();
   const email = formData.get('email') as string;
   const password = formData.get('password') as string;
@@ -71,6 +78,7 @@ export async function action({ request }: Route.ActionArgs) {
 
   const sessionCookie = (await session.parse(cookieHeader)) || {};
   sessionCookie.userId = user.id;
+  sessionCookie.jwt = jwt.sign({ sub: user.id }, SECRET_KEY);
 
   return redirect(`/user/${user.id}`, {
     headers: {
