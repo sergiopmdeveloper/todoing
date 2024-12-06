@@ -26,7 +26,28 @@ export function meta({}: Route.MetaArgs) {
 }
 
 /**
- * Sign in server action.
+ * Sign in page server loader.
+ * @param {Route.LoaderArgs} request - The incoming request.
+ */
+export async function loader({ request }: Route.LoaderArgs) {
+  const cookieHeader = request.headers.get('Cookie');
+
+  const sessionCookie = await session.parse(cookieHeader);
+  const userId = sessionCookie?.userId;
+
+  if (userId) {
+    return redirect(`/user/${userId}`);
+  }
+
+  return new Response(null, {
+    headers: {
+      'Set-Cookie': await session.serialize(null, { maxAge: 0 }),
+    },
+  });
+}
+
+/**
+ * Sign in page server action.
  * @param {Route.ActionArgs} request - The incoming request.
  */
 export async function action({ request }: Route.ActionArgs) {
@@ -78,7 +99,7 @@ export async function action({ request }: Route.ActionArgs) {
 
   const sessionCookie = (await session.parse(cookieHeader)) || {};
   sessionCookie.userId = user.id;
-  sessionCookie.jwt = jwt.sign({ sub: user.id }, SECRET_KEY);
+  sessionCookie.token = jwt.sign({ sub: user.id }, SECRET_KEY);
 
   return redirect(`/user/${user.id}`, {
     headers: {
