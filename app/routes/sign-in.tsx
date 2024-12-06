@@ -4,9 +4,10 @@ import { Chip } from '@nextui-org/chip';
 import { Input } from '@nextui-org/input';
 import { Link } from '@nextui-org/link';
 import argon2 from 'argon2';
-import { useFetcher } from 'react-router';
+import { redirect, useFetcher } from 'react-router';
 import { z } from 'zod';
 import FieldError from '~/components/field-error';
+import { session } from '~/utils/cookies.server';
 import { db } from '~/utils/db.server';
 import type { Route } from './+types/sign-in';
 
@@ -66,10 +67,16 @@ export async function action({ request }: Route.ActionArgs) {
     };
   }
 
-  return {
-    fieldErrors: {},
-    invalidCredentials: false,
-  };
+  const cookieHeader = request.headers.get('Cookie');
+
+  const sessionCookie = (await session.parse(cookieHeader)) || {};
+  sessionCookie.userId = user.id;
+
+  return redirect(`/user/${user.id}`, {
+    headers: {
+      'Set-Cookie': await session.serialize(sessionCookie),
+    },
+  });
 }
 
 /**
@@ -78,9 +85,21 @@ export async function action({ request }: Route.ActionArgs) {
 export default function SignIn() {
   const fetcher = useFetcher<typeof action>();
 
-  const emailErrors = fetcher.data?.fieldErrors?.email;
-  const passwordErrors = fetcher.data?.fieldErrors?.password;
-  const invalidCredentials = fetcher.data?.invalidCredentials;
+  const emailErrors =
+    fetcher.data && 'fieldErrors' in fetcher.data
+      ? fetcher.data.fieldErrors.email
+      : undefined;
+
+  const passwordErrors =
+    fetcher.data && 'fieldErrors' in fetcher.data
+      ? fetcher.data.fieldErrors.password
+      : undefined;
+
+  const invalidCredentials =
+    fetcher.data && 'invalidCredentials' in fetcher.data
+      ? fetcher.data.invalidCredentials
+      : false;
+
   const submitting = fetcher.state !== 'idle';
 
   return (
