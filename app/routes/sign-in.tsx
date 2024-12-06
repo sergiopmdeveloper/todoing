@@ -1,10 +1,13 @@
 import { Button } from '@nextui-org/button';
 import { Card, CardBody } from '@nextui-org/card';
+import { Chip } from '@nextui-org/chip';
 import { Input } from '@nextui-org/input';
 import { Link } from '@nextui-org/link';
+import argon2 from 'argon2';
 import { useFetcher } from 'react-router';
 import { z } from 'zod';
 import FieldError from '~/components/field-error';
+import { db } from '~/utils/db.server';
 import type { Route } from './+types/sign-in';
 
 /**
@@ -26,8 +29,8 @@ export function meta({}: Route.MetaArgs) {
  */
 export async function action({ request }: Route.ActionArgs) {
   const formData = await request.formData();
-  const email = formData.get('email');
-  const password = formData.get('password');
+  const email = formData.get('email') as string;
+  const password = formData.get('password') as string;
 
   const signInSchema = z.object({
     email: z.string().min(1, 'Required'),
@@ -39,11 +42,33 @@ export async function action({ request }: Route.ActionArgs) {
   if (!fieldValidation.success) {
     return {
       fieldErrors: fieldValidation.error.flatten().fieldErrors,
+      invalidCredentials: false,
+    };
+  }
+
+  const user = await db.user.findFirst({
+    where: {
+      email: email,
+    },
+  });
+
+  if (!user) {
+    return {
+      fieldErrors: {},
+      invalidCredentials: true,
+    };
+  }
+
+  if (!(await argon2.verify(user.password, password))) {
+    return {
+      fieldErrors: {},
+      invalidCredentials: true,
     };
   }
 
   return {
     fieldErrors: {},
+    invalidCredentials: false,
   };
 }
 
@@ -51,10 +76,11 @@ export async function action({ request }: Route.ActionArgs) {
  * Sign in page.
  */
 export default function SignIn() {
-  const fetcher = useFetcher();
+  const fetcher = useFetcher<typeof action>();
 
   const emailErrors = fetcher.data?.fieldErrors?.email;
   const passwordErrors = fetcher.data?.fieldErrors?.password;
+  const invalidCredentials = fetcher.data?.invalidCredentials;
   const submitting = fetcher.state !== 'idle';
 
   return (
@@ -95,6 +121,12 @@ export default function SignIn() {
                   isRequired
                 />
               </div>
+
+              {invalidCredentials && (
+                <Chip className="mb-6" color="danger" size="sm">
+                  Incorrect email or password
+                </Chip>
+              )}
 
               <p className="mb-6 text-small">
                 Need to create an account?{' '}
