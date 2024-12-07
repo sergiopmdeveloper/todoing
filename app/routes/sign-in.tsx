@@ -99,7 +99,9 @@ export async function action({ request }: Route.ActionArgs) {
 
   const sessionCookie = (await session.parse(cookieHeader)) || {};
   sessionCookie.userId = user.id;
-  sessionCookie.token = jwt.sign({ sub: user.id }, SECRET_KEY);
+  sessionCookie.token = jwt.sign({ sub: user.id }, SECRET_KEY, {
+    expiresIn: '12h',
+  });
 
   return redirect(`/user/${user.id}`, {
     headers: {
