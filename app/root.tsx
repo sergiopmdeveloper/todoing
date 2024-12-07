@@ -28,6 +28,19 @@ export const links: Route.LinksFunction = () => [
 ];
 
 /**
+ * App server loader.
+ * @param {Route.LoaderArgs} args - The loader args.
+ * @param {Request} args.request - The incoming request.
+ */
+export async function loader({ request }: Route.LoaderArgs) {
+  const cookieHeader = request.headers.get('Cookie');
+
+  return {
+    sessionExists: cookieHeader?.includes('session='),
+  };
+}
+
+/**
  * App layout.
  * @param {React.ReactNode} children - The children to render.
  */
@@ -44,7 +57,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
       <body suppressHydrationWarning>
         <NextUIProvider>
-          <Header />
           {children}
           <ScrollRestoration />
           <Scripts />
@@ -56,9 +68,18 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
 /**
  * App root.
+ * @param {Route.ComponentProps} props - The app props.
+ * @param {Route.ComponentProps["loaderData"]} props.loaderData - The loader data.
  */
-export default function App() {
-  return <Outlet />;
+export default function App({ loaderData }: Route.ComponentProps) {
+  const { sessionExists } = loaderData;
+
+  return (
+    <>
+      <Header sessionExists={sessionExists} />
+      <Outlet />
+    </>
+  );
 }
 
 /**

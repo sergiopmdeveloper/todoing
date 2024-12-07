@@ -9,16 +9,19 @@ import {
   NavbarMenuItem,
   NavbarMenuToggle,
 } from '@nextui-org/navbar';
-import { Link as RouterLink, useFetcher, useLocation } from 'react-router';
+import { Link as RouterLink, useFetcher } from 'react-router';
 
 /**
  * Header component.
+ * @param {boolean | undefined} sessionExists - Whether a session exists.
  */
-export default function Header() {
-  const location = useLocation();
+export default function Header({
+  sessionExists,
+}: {
+  sessionExists: boolean | undefined;
+}) {
   const fetcher = useFetcher();
 
-  const isProtectedPage = location.pathname.startsWith('/user/');
   const signingOut = fetcher.state !== 'idle';
 
   return (
@@ -45,13 +48,13 @@ export default function Header() {
 
       <NavbarContent justify="end">
         <NavbarItem className="hidden sm:flex">
-          {!isProtectedPage && (
+          {!sessionExists && (
             <Button href="/sign-in" color="primary" variant="flat" as={Link}>
               Sign in
             </Button>
           )}
 
-          {isProtectedPage && (
+          {sessionExists && (
             <fetcher.Form method="post" action="/sign-out">
               <Button
                 type="submit"
