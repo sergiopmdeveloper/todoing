@@ -9,12 +9,18 @@ import {
   NavbarMenuItem,
   NavbarMenuToggle,
 } from '@nextui-org/navbar';
-import { Link as RouterLink } from 'react-router';
+import { Link as RouterLink, useFetcher, useLocation } from 'react-router';
 
 /**
  * Header component.
  */
 export default function Header() {
+  const location = useLocation();
+  const fetcher = useFetcher();
+
+  const isProtectedPage = location.pathname.startsWith('/user/');
+  const signingOut = fetcher.state !== 'idle';
+
   return (
     <Navbar maxWidth="2xl" isBordered>
       <NavbarContent className="sm:hidden">
@@ -39,9 +45,24 @@ export default function Header() {
 
       <NavbarContent justify="end">
         <NavbarItem className="hidden sm:flex">
-          <Button href="/sign-in" color="primary" variant="flat" as={Link}>
-            Sign in
-          </Button>
+          {!isProtectedPage && (
+            <Button href="/sign-in" color="primary" variant="flat" as={Link}>
+              Sign in
+            </Button>
+          )}
+
+          {isProtectedPage && (
+            <fetcher.Form method="post" action="/sign-out">
+              <Button
+                type="submit"
+                color="danger"
+                variant="flat"
+                isLoading={signingOut}
+              >
+                Sign out
+              </Button>
+            </fetcher.Form>
+          )}
         </NavbarItem>
       </NavbarContent>
 
