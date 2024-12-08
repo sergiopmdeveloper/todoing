@@ -2,7 +2,8 @@ import { Button } from '@nextui-org/button';
 import { Input } from '@nextui-org/input';
 import { Link } from '@nextui-org/link';
 import jwt from 'jsonwebtoken';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import toast, { Toaster } from 'react-hot-toast';
 import { redirect, useFetcher } from 'react-router';
 import { z } from 'zod';
 import FieldError from '~/components/field-error';
@@ -92,7 +93,7 @@ export async function action({ request, params }: Route.ActionArgs) {
       .string()
       .max(50, 'Cannot exceed 50 characters')
       .regex(
-        /^[A-Za-zÀ-ÖØ-öø-ÿ' -]+$/,
+        /^[A-Za-zÀ-ÖØ-öø-ÿ' -]*$/,
         'Can only include letters, spaces, hyphens and apostrophes'
       ),
     email: z.string().min(1, 'Required').email('Invalid email'),
@@ -138,6 +139,12 @@ export default function User({ loaderData }: Route.ComponentProps) {
 
   const nameHasNotChanged = name === actualName;
   const emailHasNotChanged = email === actualEmail;
+
+  useEffect(() => {
+    if (fetcher.data && Object.keys(fetcher.data.fieldErrors).length === 0) {
+      toast.success('Account details updated successfully');
+    }
+  }, [fetcher.data]);
 
   return (
     <main>
@@ -199,6 +206,8 @@ export default function User({ loaderData }: Route.ComponentProps) {
           </Button>
         </fetcher.Form>
       </Section>
+
+      <Toaster position="bottom-right" />
     </main>
   );
 }
