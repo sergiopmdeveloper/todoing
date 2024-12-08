@@ -7,6 +7,7 @@ import {
   Scripts,
   ScrollRestoration,
 } from 'react-router';
+import Header from '~/components/header';
 import type { Route } from './+types/root';
 import stylesheet from './app.css?url';
 
@@ -24,8 +25,20 @@ export const links: Route.LinksFunction = () => [
     rel: 'stylesheet',
     href: 'https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap',
   },
-  { rel: 'stylesheet', href: stylesheet },
 ];
+
+/**
+ * App server loader.
+ * @param {Route.LoaderArgs} args - The loader args.
+ * @param {Request} args.request - The incoming request.
+ */
+export async function loader({ request }: Route.LoaderArgs) {
+  const cookieHeader = request.headers.get('Cookie');
+
+  return {
+    sessionExists: cookieHeader?.includes('session='),
+  };
+}
 
 /**
  * App layout.
@@ -37,6 +50,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="stylesheet" href={stylesheet} />
         <Meta />
         <Links />
       </head>
@@ -54,9 +68,18 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
 /**
  * App root.
+ * @param {Route.ComponentProps} props - The app props.
+ * @param {Route.ComponentProps["loaderData"]} props.loaderData - The loader data.
  */
-export default function App() {
-  return <Outlet />;
+export default function App({ loaderData }: Route.ComponentProps) {
+  const { sessionExists } = loaderData;
+
+  return (
+    <>
+      <Header sessionExists={sessionExists} />
+      <Outlet />
+    </>
+  );
 }
 
 /**
