@@ -164,7 +164,7 @@ export default function User({ loaderData }: Route.ComponentProps) {
               name="name"
               placeholder="Enter your name..."
               onChange={(event) => setActualName(event.target.value)}
-              defaultValue={name}
+              defaultValue={name as string}
               autoComplete="name"
               label="Name"
               isInvalid={!!nameErrors}

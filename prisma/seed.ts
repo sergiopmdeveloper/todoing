@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import { todos } from './seeds/todos';
 import { users } from './seeds/user';
 
 const prisma = new PrismaClient();
@@ -9,6 +10,10 @@ const prisma = new PrismaClient();
 async function main() {
   await prisma.user.createMany({
     data: users,
+  });
+
+  await prisma.todo.createMany({
+    data: todos,
   });
 }
 
