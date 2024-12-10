@@ -20,7 +20,9 @@ import { Tooltip } from '@nextui-org/tooltip';
 import { format } from 'date-fns';
 import jwt from 'jsonwebtoken';
 import { Plus, Trash2 } from 'lucide-react';
-import { redirect } from 'react-router';
+import { useEffect } from 'react';
+import toast, { Toaster } from 'react-hot-toast';
+import { redirect, useFetcher } from 'react-router';
 import Priority from '~/components/priority';
 import { Section } from '~/layouts/section';
 import { session } from '~/utils/cookies.server';
@@ -83,6 +85,25 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 }
 
 /**
+ * Todos page server action.
+ * @param {Route.ActionArgs} request - The incoming request.
+ */
+export async function action({ request }: Route.ActionArgs) {
+  const form = await request.formData();
+  const todoId = form.get('todoId') as string;
+
+  await db.todo.delete({
+    where: {
+      id: todoId,
+    },
+  });
+
+  return {
+    success: true,
+  };
+}
+
+/**
  * Todos page.
  */
 export default function Todos({ loaderData }: Route.ComponentProps) {
@@ -134,6 +155,8 @@ export default function Todos({ loaderData }: Route.ComponentProps) {
           </TableBody>
         </Table>
       </Section>
+
+      <Toaster position="bottom-right" />
     </main>
   );
 }
@@ -143,7 +166,17 @@ export default function Todos({ loaderData }: Route.ComponentProps) {
  * @param {Todo} todo - The todo to delete.
  */
 function DeleteTodoAction(todo: Todo) {
-  const { isOpen, onOpen, onOpenChange } = useDisclosure();
+  const { isOpen, onOpen, onOpenChange, onClose } = useDisclosure();
+  const fetcher = useFetcher<typeof action>();
+
+  useEffect(() => {
+    if (fetcher.data?.success) {
+      onClose();
+      toast.success('Todo deleted successfully');
+    }
+  }, [fetcher.data]);
+
+  const submitting = fetcher.state !== 'idle';
 
   return (
     <>
@@ -174,7 +207,19 @@ function DeleteTodoAction(todo: Todo) {
 
               <ModalFooter>
                 <Button onPress={onClose}>Close</Button>
-                <Button color="danger">Delete</Button>
+
+                <fetcher.Form method="post">
+                  <input
+                    name="todoId"
+                    id="todoId"
+                    type="hidden"
+                    value={todo.id}
+                  />
+
+                  <Button type="submit" color="danger" isLoading={submitting}>
+                    Delete
+                  </Button>
+                </fetcher.Form>
               </ModalFooter>
             </>
           )}
