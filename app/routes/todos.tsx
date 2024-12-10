@@ -1,4 +1,13 @@
+import { Button } from '@nextui-org/button';
 import { Chip } from '@nextui-org/chip';
+import {
+  Modal,
+  ModalBody,
+  ModalContent,
+  ModalFooter,
+  ModalHeader,
+  useDisclosure,
+} from '@nextui-org/modal';
 import {
   Table,
   TableBody,
@@ -10,8 +19,10 @@ import {
 import { Tooltip } from '@nextui-org/tooltip';
 import { format } from 'date-fns';
 import jwt from 'jsonwebtoken';
-import { Edit2, Trash2 } from 'lucide-react';
-import { redirect } from 'react-router';
+import { Plus, Trash2 } from 'lucide-react';
+import { useEffect } from 'react';
+import toast, { Toaster } from 'react-hot-toast';
+import { redirect, useFetcher } from 'react-router';
 import Priority from '~/components/priority';
 import { Section } from '~/layouts/section';
 import { session } from '~/utils/cookies.server';
@@ -74,6 +85,25 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 }
 
 /**
+ * Todos page server action.
+ * @param {Route.ActionArgs} request - The incoming request.
+ */
+export async function action({ request }: Route.ActionArgs) {
+  const form = await request.formData();
+  const todoId = form.get('todoId') as string;
+
+  await db.todo.delete({
+    where: {
+      id: todoId,
+    },
+  });
+
+  return {
+    success: true,
+  };
+}
+
+/**
  * Todos page.
  */
 export default function Todos({ loaderData }: Route.ComponentProps) {
@@ -82,7 +112,13 @@ export default function Todos({ loaderData }: Route.ComponentProps) {
   return (
     <main>
       <Section>
-        <h1 className="mb-4 text-2xl">Your todos</h1>
+        <div className="mb-4 flex items-center justify-between">
+          <h1 className="text-2xl">Your todos</h1>
+
+          <Button size="sm" color="primary" endContent={<Plus size={15} />}>
+            Add todo
+          </Button>
+        </div>
 
         <Table aria-label="Todos table">
           <TableHeader>
@@ -111,17 +147,7 @@ export default function Todos({ loaderData }: Route.ComponentProps) {
 
                 <TableCell>
                   <div className="flex items-center gap-1">
-                    <div className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-lg bg-warning/20 transition-colors hover:bg-warning/30">
-                      <Tooltip content="Edit">
-                        <Edit2 className="text-warning" size={15} />
-                      </Tooltip>
-                    </div>
-
-                    <div className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-lg bg-danger/20 transition-colors hover:bg-danger/30">
-                      <Tooltip content="Delete">
-                        <Trash2 className="text-danger" size={15} />
-                      </Tooltip>
-                    </div>
+                    <DeleteTodoAction {...todo} />
                   </div>
                 </TableCell>
               </TableRow>
@@ -129,6 +155,76 @@ export default function Todos({ loaderData }: Route.ComponentProps) {
           </TableBody>
         </Table>
       </Section>
+
+      <Toaster position="bottom-right" />
     </main>
+  );
+}
+
+/**
+ * Delete todo action.
+ * @param {Todo} todo - The todo to delete.
+ */
+function DeleteTodoAction(todo: Todo) {
+  const { isOpen, onOpen, onOpenChange, onClose } = useDisclosure();
+  const fetcher = useFetcher<typeof action>();
+
+  useEffect(() => {
+    if (fetcher.data?.success) {
+      onClose();
+      toast.success('Todo deleted successfully');
+    }
+  }, [fetcher.data]);
+
+  const submitting = fetcher.state !== 'idle';
+
+  return (
+    <>
+      <Tooltip content="Delete">
+        <div
+          className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-lg bg-danger/20 transition-colors hover:bg-danger/30"
+          onClick={onOpen}
+        >
+          <Trash2 className="text-danger" size={15} />
+        </div>
+      </Tooltip>
+
+      <Modal isOpen={isOpen} onOpenChange={onOpenChange}>
+        <ModalContent>
+          {(onClose) => (
+            <>
+              <ModalHeader>
+                <h2 className="text-xl font-bold">Warning</h2>
+              </ModalHeader>
+
+              <ModalBody>
+                <p>
+                  You are about to delete the todo{' '}
+                  <span className="font-bold italic">{todo.name}</span> and this
+                  action is irreversible. Are you sure you want to to proceed?
+                </p>
+              </ModalBody>
+
+              <ModalFooter>
+                <Button onPress={onClose}>Close</Button>
+
+                <fetcher.Form method="post">
+                  <input
+                    name="todoId"
+                    id="todoId"
+                    type="hidden"
+                    value={todo.id}
+                  />
+
+                  <Button type="submit" color="danger" isLoading={submitting}>
+                    Delete
+                  </Button>
+                </fetcher.Form>
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
+    </>
   );
 }

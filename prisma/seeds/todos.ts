@@ -1,6 +1,5 @@
 export const todos = [
   {
-    id: 'todo1',
     name: 'Buy groceries',
     description: 'Milk, Bread, Cheese, Eggs',
     priority: 1,
@@ -8,7 +7,6 @@ export const todos = [
     userId: 'cm4cp1yl80000qcc3zsynss4s',
   },
   {
-    id: 'todo2',
     name: 'Complete project report',
     description: 'Finish the final draft of the project report',
     priority: 2,
@@ -16,7 +14,6 @@ export const todos = [
     userId: 'cm4cp1yl80000qcc3zsynss4s',
   },
   {
-    id: 'todo3',
     name: 'Workout',
     description: 'Go to the gym for a workout session',
     priority: 3,
