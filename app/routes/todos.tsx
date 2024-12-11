@@ -1,5 +1,14 @@
 import { Button } from '@nextui-org/button';
 import { Chip } from '@nextui-org/chip';
+import { DatePicker } from '@nextui-org/date-picker';
+import {
+  Drawer,
+  DrawerBody,
+  DrawerContent,
+  DrawerFooter,
+  DrawerHeader,
+} from '@nextui-org/drawer';
+import { Input, Textarea } from '@nextui-org/input';
 import {
   Modal,
   ModalBody,
@@ -8,6 +17,7 @@ import {
   ModalHeader,
   useDisclosure,
 } from '@nextui-org/modal';
+import { Select, SelectItem } from '@nextui-org/select';
 import {
   Table,
   TableBody,
@@ -108,6 +118,8 @@ export async function action({ request }: Route.ActionArgs) {
  */
 export default function Todos({ loaderData }: Route.ComponentProps) {
   const todos = loaderData as Todo[];
+  const { isOpen, onOpen, onOpenChange } = useDisclosure();
+  const fetcher = useFetcher<typeof action>();
 
   return (
     <main>
@@ -115,9 +127,73 @@ export default function Todos({ loaderData }: Route.ComponentProps) {
         <div className="mb-4 flex items-center justify-between">
           <h1 className="text-2xl">Your todos</h1>
 
-          <Button size="sm" color="primary" endContent={<Plus size={15} />}>
+          <Button
+            size="sm"
+            color="primary"
+            endContent={<Plus size={15} />}
+            onPress={onOpen}
+          >
             Add todo
           </Button>
+
+          <Drawer isOpen={isOpen} onOpenChange={onOpenChange}>
+            <DrawerContent>
+              {(onClose) => (
+                <>
+                  <DrawerHeader>
+                    <h2 className="text-xl font-bold">Add new todo</h2>
+                  </DrawerHeader>
+
+                  <DrawerBody>
+                    <fetcher.Form className="space-y-4" method="post">
+                      <Input
+                        id="name"
+                        name="name"
+                        placeholder="Todo name..."
+                        autoComplete="off"
+                        label="Name"
+                        isRequired
+                      />
+
+                      <Textarea
+                        id="description"
+                        name="description"
+                        placeholder="Todo description..."
+                        autoComplete="off"
+                        label="Description"
+                      />
+
+                      <Select
+                        id="priority"
+                        name="priority"
+                        placeholder="Select a priority..."
+                        label="Todo priority"
+                      >
+                        {['High', 'Medium', 'Low'].map((priority, index) => (
+                          <SelectItem key={index}>{priority}</SelectItem>
+                        ))}
+                      </Select>
+
+                      <DatePicker
+                        id="deadline"
+                        name="deadline"
+                        label="Todo deadline"
+                        isRequired
+                      />
+                    </fetcher.Form>
+                  </DrawerBody>
+
+                  <DrawerFooter>
+                    <Button onPress={onClose}>Close</Button>
+
+                    <Button type="submit" color="danger">
+                      Delete
+                    </Button>
+                  </DrawerFooter>
+                </>
+              )}
+            </DrawerContent>
+          </Drawer>
         </div>
 
         <Table aria-label="Todos table">

@@ -9,7 +9,7 @@
     "typecheck": "react-router typegen && tsc --build --noEmit"
   },
   "dependencies": {
-    "@nextui-org/react": "^2.4.8",
+    "@nextui-org/react": "^2.6.5",
     "@prisma/client": "6.0.1",
     "@react-router/node": "^7.0.2",
     "@react-router/serve": "^7.0.2",
