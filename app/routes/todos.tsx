@@ -5,7 +5,6 @@ import {
   Drawer,
   DrawerBody,
   DrawerContent,
-  DrawerFooter,
   DrawerHeader,
 } from '@nextui-org/drawer';
 import { Input, Textarea } from '@nextui-org/input';
@@ -32,11 +31,12 @@ import jwt from 'jsonwebtoken';
 import { Plus, Trash2 } from 'lucide-react';
 import { useEffect } from 'react';
 import toast, { Toaster } from 'react-hot-toast';
-import { redirect, useFetcher } from 'react-router';
+import { redirect, useFetcher, useParams } from 'react-router';
 import Priority from '~/components/priority';
 import { Section } from '~/layouts/section';
 import { session } from '~/utils/cookies.server';
 import { db } from '~/utils/db.server';
+import { parseTodoPriority } from '~/utils/todo';
 import { type Route } from './+types/todos';
 
 /**
@@ -100,17 +100,43 @@ export async function loader({ request, params }: Route.LoaderArgs) {
  */
 export async function action({ request }: Route.ActionArgs) {
   const form = await request.formData();
-  const todoId = form.get('todoId') as string;
+  const action = form.get('action') as string;
 
-  await db.todo.delete({
-    where: {
-      id: todoId,
-    },
-  });
+  if (action === 'delete') {
+    const todoId = form.get('todoId') as string;
 
-  return {
-    success: true,
-  };
+    await db.todo.delete({
+      where: {
+        id: todoId,
+      },
+    });
+
+    return {
+      success: true,
+    };
+  }
+
+  if (action === 'add') {
+    const userId = form.get('userId') as string;
+    const name = form.get('name') as string;
+    const description = form.get('description') as string;
+    const priority = form.get('priority') as string;
+    const deadline = form.get('deadline') as string;
+
+    await db.todo.create({
+      data: {
+        name,
+        description,
+        priority: parseTodoPriority(priority),
+        deadline: new Date(deadline),
+        userId,
+      },
+    });
+
+    return {
+      success: true,
+    };
+  }
 }
 
 /**
@@ -120,6 +146,7 @@ export default function Todos({ loaderData }: Route.ComponentProps) {
   const todos = loaderData as Todo[];
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
   const fetcher = useFetcher<typeof action>();
+  const { userId } = useParams();
 
   return (
     <main>
@@ -146,6 +173,20 @@ export default function Todos({ loaderData }: Route.ComponentProps) {
 
                   <DrawerBody>
                     <fetcher.Form className="space-y-4" method="post">
+                      <input
+                        name="action"
+                        id="action"
+                        type="hidden"
+                        value="add"
+                      />
+
+                      <input
+                        name="userId"
+                        id="userId"
+                        type="hidden"
+                        value={userId}
+                      />
+
                       <Input
                         id="name"
                         name="name"
@@ -169,8 +210,8 @@ export default function Todos({ loaderData }: Route.ComponentProps) {
                         placeholder="Select a priority..."
                         label="Todo priority"
                       >
-                        {['High', 'Medium', 'Low'].map((priority, index) => (
-                          <SelectItem key={index}>{priority}</SelectItem>
+                        {['High', 'Medium', 'Low'].map((priority) => (
+                          <SelectItem key={priority}>{priority}</SelectItem>
                         ))}
                       </Select>
 
@@ -180,16 +221,16 @@ export default function Todos({ loaderData }: Route.ComponentProps) {
                         label="Todo deadline"
                         isRequired
                       />
+
+                      <div className="flex justify-end gap-1">
+                        <Button onPress={onClose}>Close</Button>
+
+                        <Button type="submit" color="danger">
+                          Delete
+                        </Button>
+                      </div>
                     </fetcher.Form>
                   </DrawerBody>
-
-                  <DrawerFooter>
-                    <Button onPress={onClose}>Close</Button>
-
-                    <Button type="submit" color="danger">
-                      Delete
-                    </Button>
-                  </DrawerFooter>
                 </>
               )}
             </DrawerContent>
@@ -285,6 +326,13 @@ function DeleteTodoAction(todo: Todo) {
                 <Button onPress={onClose}>Close</Button>
 
                 <fetcher.Form method="post">
+                  <input
+                    name="action"
+                    id="action"
+                    type="hidden"
+                    value="delete"
+                  />
+
                   <input
                     name="todoId"
                     id="todoId"
