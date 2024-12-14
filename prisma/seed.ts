@@ -5,7 +5,7 @@ import { users } from './seeds/user';
 const prisma = new PrismaClient();
 
 /**
- * Seeds the database
+ * Seeds the database.
  */
 async function main() {
   await prisma.user.createMany({

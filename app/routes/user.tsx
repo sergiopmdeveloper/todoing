@@ -8,8 +8,8 @@ import { redirect, useFetcher } from 'react-router';
 import { z } from 'zod';
 import FieldError from '~/components/field-error';
 import { Section } from '~/layouts/section';
-import { session } from '~/utils/cookies.server';
-import { db } from '~/utils/db.server';
+import { session } from '~/utils/cookies';
+import { db } from '~/utils/prisma';
 import type { Route } from './+types/user';
 
 /**

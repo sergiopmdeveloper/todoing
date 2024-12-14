@@ -25,8 +25,8 @@ import toast, { Toaster } from 'react-hot-toast';
 import { redirect, useFetcher } from 'react-router';
 import Priority from '~/components/priority';
 import { Section } from '~/layouts/section';
-import { session } from '~/utils/cookies.server';
-import { db } from '~/utils/db.server';
+import { session } from '~/utils/cookies';
+import { db } from '~/utils/prisma';
 import { type Route } from './+types/todos';
 
 /**
