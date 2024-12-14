@@ -24,7 +24,7 @@ import { useEffect } from 'react';
 import toast, { Toaster } from 'react-hot-toast';
 import { redirect, useFetcher } from 'react-router';
 import Priority from '~/components/priority';
-import { Section } from '~/layouts/section';
+import Section from '~/layouts/section';
 import { session } from '~/utils/cookies';
 import { db } from '~/utils/prisma';
 import { type Route } from './+types/todos';

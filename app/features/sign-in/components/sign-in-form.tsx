@@ -5,13 +5,13 @@ import { Input } from '@nextui-org/input';
 import { Link } from '@nextui-org/link';
 import { useFetcher } from 'react-router';
 import FieldError from '~/components/field-error';
-import type { action as signInAction } from '~/routes/sign-in';
+import type { action as signInPageAction } from '~/routes/sign-in';
 
 /**
  * Sign in form component.
  */
 export default function SignInForm() {
-  const fetcher = useFetcher<typeof signInAction>();
+  const fetcher = useFetcher<typeof signInPageAction>();
 
   const emailErrors =
     fetcher.data && 'fieldErrors' in fetcher.data

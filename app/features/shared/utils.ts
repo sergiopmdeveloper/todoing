@@ -1,8 +1,6 @@
 import jwt from 'jsonwebtoken';
+import type { Session } from '~/features/shared/types';
 import { session } from '~/utils/cookies';
-
-const SECRET_KEY = process.env.SECRET_KEY as string;
-const TOKEN_OPTIONS = { expiresIn: '12h' };
 
 /**
  * Creates a session header.
@@ -13,11 +11,26 @@ export async function createSessionHeader(
   cookies: string | null,
   userId: string
 ) {
+  const SECRET_KEY = process.env.SECRET_KEY as string;
+  const TOKEN_OPTIONS = { expiresIn: '12h' };
+  const tokenPayload = { sub: userId };
+
   const sessionCookie = (await session.parse(cookies)) || {};
-  let tokenPayload = { sub: userId };
 
   sessionCookie.userId = userId;
   sessionCookie.token = jwt.sign(tokenPayload, SECRET_KEY, TOKEN_OPTIONS);
 
   return { 'Set-Cookie': await session.serialize(sessionCookie) };
+}
+
+/**
+ * Gets session data.
+ * @param {string} token - The session token.
+ */
+export function getSessionData(token: string) {
+  try {
+    return jwt.verify(token, process.env.SECRET_KEY as string) as Session;
+  } catch (error) {
+    return false;
+  }
 }
