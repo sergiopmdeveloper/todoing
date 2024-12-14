@@ -8,7 +8,7 @@ import {
 } from '@nextui-org/modal';
 import { useDisclosure } from '@nextui-org/react';
 import { Tooltip } from '@nextui-org/tooltip';
-import { Todo } from '@prisma/client';
+import type { Todo } from '@prisma/client';
 import { Trash2 } from 'lucide-react';
 import { useEffect } from 'react';
 import toast from 'react-hot-toast';

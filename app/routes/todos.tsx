@@ -1,5 +1,5 @@
 import { Button } from '@nextui-org/button';
-import { Todo } from '@prisma/client';
+import type { Todo } from '@prisma/client';
 import { Plus } from 'lucide-react';
 import { Toaster } from 'react-hot-toast';
 import { redirect } from 'react-router';
