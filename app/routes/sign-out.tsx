@@ -1,5 +1,5 @@
 import { redirect } from 'react-router';
-import { session } from '~/utils/cookies.server';
+import { session } from '~/utils/cookies';
 
 /**
  * Sign out server action.

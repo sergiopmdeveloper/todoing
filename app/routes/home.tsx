@@ -1,3 +1,4 @@
+import Section from '~/layouts/section';
 import type { Route } from './+types/home';
 
 /**
@@ -20,10 +21,10 @@ export function meta({}: Route.MetaArgs) {
 export default function Home() {
   return (
     <main>
-      <section>
+      <Section>
         <h1 className="flex text-xl font-bold">Todoing</h1>
         <p>A sleek and simple task manager built to keep you productive 📝</p>
-      </section>
+      </Section>
     </main>
   );
 }

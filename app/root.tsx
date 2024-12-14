@@ -33,6 +33,10 @@ export const links: Route.LinksFunction = () => [
  * @param {Request} args.request - The incoming request.
  */
 export async function loader({ request }: Route.LoaderArgs) {
+  if (!process.env.SECRET_KEY) {
+    throw new Error('SECRET_KEY environment variable is not set.');
+  }
+
   const cookieHeader = request.headers.get('Cookie');
 
   return {

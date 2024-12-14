@@ -1,15 +1,10 @@
-import { Button } from '@nextui-org/button';
-import { Input } from '@nextui-org/input';
-import { Link } from '@nextui-org/link';
-import jwt from 'jsonwebtoken';
-import { useEffect, useState } from 'react';
-import toast, { Toaster } from 'react-hot-toast';
-import { redirect, useFetcher } from 'react-router';
-import { z } from 'zod';
-import FieldError from '~/components/field-error';
-import { Section } from '~/layouts/section';
-import { session } from '~/utils/cookies.server';
-import { db } from '~/utils/db.server';
+import { redirect } from 'react-router';
+import { getSessionData } from '~/features/shared/utils';
+import UserInfoForm from '~/features/user/components/user-info-form';
+import { validateUserInfoData } from '~/features/user/validation';
+import Section from '~/layouts/section';
+import { session } from '~/utils/cookies';
+import { db } from '~/utils/prisma';
 import type { Route } from './+types/user';
 
 /**
@@ -32,22 +27,13 @@ export function meta({}: Route.MetaArgs) {
  * @param {Route.LoaderArgs["params"]} args.params - The route parameters.
  */
 export async function loader({ request, params }: Route.LoaderArgs) {
-  const SECRET_KEY = process.env.SECRET_KEY;
-
-  if (!SECRET_KEY) {
-    throw new Error('SECRET_KEY is not set');
-  }
-
-  const cookieHeader = request.headers.get('Cookie');
-
-  const sessionCookie = await session.parse(cookieHeader);
+  const cookies = request.headers.get('Cookie');
+  const sessionCookie = await session.parse(cookies);
   const token = sessionCookie?.token;
 
-  let sessionData;
+  const sessionData = getSessionData(token);
 
-  try {
-    sessionData = jwt.verify(token, SECRET_KEY);
-  } catch (error) {
+  if (!sessionData) {
     return redirect('/sign-in', {
       headers: {
         'Set-Cookie': await session.serialize(null, { maxAge: 0 }),
@@ -88,23 +74,13 @@ export async function action({ request, params }: Route.ActionArgs) {
   const name = formData.get('name') as string;
   const email = formData.get('email') as string;
 
-  const updateUserInfoSchema = z.object({
-    name: z
-      .string()
-      .max(50, 'Cannot exceed 50 characters')
-      .regex(
-        /^[A-Za-zÀ-ÖØ-öø-ÿ' -]*$/,
-        'Can only include letters, spaces, hyphens and apostrophes'
-      ),
-    email: z.string().min(1, 'Required').email('Invalid email'),
+  const { validationErrors } = validateUserInfoData({
+    name,
+    email,
   });
 
-  const fieldValidation = updateUserInfoSchema.safeParse({ name, email });
-
-  if (!fieldValidation.success) {
-    return {
-      fieldErrors: fieldValidation.error.flatten().fieldErrors,
-    };
+  if (Object.keys(validationErrors.fieldErrors).length > 0) {
+    return { ...validationErrors };
   }
 
   await db.user.update({
@@ -128,23 +104,7 @@ export async function action({ request, params }: Route.ActionArgs) {
  * @param {Route.ComponentProps["loaderData"]} props.loaderData - The loader data.
  */
 export default function User({ loaderData }: Route.ComponentProps) {
-  const fetcher = useFetcher<typeof action>();
   const { name, email } = loaderData && 'name' in loaderData ? loaderData : {};
-  const [actualName, setActualName] = useState(name);
-  const [actualEmail, setActualEmail] = useState(email);
-
-  const nameErrors = fetcher.data?.fieldErrors.name;
-  const emailErrors = fetcher.data?.fieldErrors.email;
-  const submitting = fetcher.state !== 'idle';
-
-  const nameHasNotChanged = name === actualName;
-  const emailHasNotChanged = email === actualEmail;
-
-  useEffect(() => {
-    if (fetcher.data && Object.keys(fetcher.data.fieldErrors).length === 0) {
-      toast.success('Account details updated successfully');
-    }
-  }, [fetcher.data]);
 
   return (
     <main>
@@ -154,60 +114,7 @@ export default function User({ loaderData }: Route.ComponentProps) {
         </h1>
       </Section>
 
-      <Section>
-        <h2 className="mb-4 text-xl">Account details</h2>
-
-        <fetcher.Form method="post">
-          <div className="mb-4 space-y-4">
-            <Input
-              id="name"
-              name="name"
-              placeholder="Enter your name..."
-              onChange={(event) => setActualName(event.target.value)}
-              defaultValue={name as string}
-              autoComplete="name"
-              label="Name"
-              isInvalid={!!nameErrors}
-              errorMessage={
-                nameErrors && <FieldError>{nameErrors[0]}</FieldError>
-              }
-            />
-
-            <Input
-              id="email"
-              name="email"
-              placeholder="Enter your email..."
-              onChange={(event) => setActualEmail(event.target.value)}
-              defaultValue={email}
-              autoComplete="email"
-              label="Email"
-              isInvalid={!!emailErrors}
-              errorMessage={
-                emailErrors && <FieldError>{emailErrors[0]}</FieldError>
-              }
-            />
-          </div>
-
-          <p className="mb-4 text-small">
-            Do you want to change your password?{' '}
-            <Link href="#" size="sm" underline="always">
-              Change password
-            </Link>
-          </p>
-
-          <Button
-            type="submit"
-            color="primary"
-            isDisabled={nameHasNotChanged && emailHasNotChanged}
-            isLoading={submitting}
-            fullWidth
-          >
-            Save
-          </Button>
-        </fetcher.Form>
-      </Section>
-
-      <Toaster position="bottom-right" />
+      <UserInfoForm name={name} email={email} />
     </main>
   );
 }
