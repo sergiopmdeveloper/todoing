@@ -1,9 +1,8 @@
-import { Button } from '@nextui-org/button';
 import type { Todo } from '@prisma/client';
-import { Plus } from 'lucide-react';
 import { Toaster } from 'react-hot-toast';
 import { redirect } from 'react-router';
 import { getSessionData } from '~/features/shared/utils';
+import AddTodo from '~/features/todos/components/add-todo';
 import TodosTable from '~/features/todos/components/todos-table';
 import Section from '~/layouts/section';
 import { session } from '~/utils/cookies';
@@ -75,9 +74,7 @@ export default function Todos({ loaderData }: Route.ComponentProps) {
         <div className="mb-4 flex items-center justify-between">
           <h1 className="text-2xl">Your todos</h1>
 
-          <Button size="sm" color="primary" endContent={<Plus size={15} />}>
-            Add todo
-          </Button>
+          <AddTodo />
         </div>
 
         <TodosTable todos={todos} />
