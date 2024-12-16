@@ -11,7 +11,10 @@ import {
 import { useDisclosure } from '@nextui-org/react';
 import { Select, SelectItem } from '@nextui-org/select';
 import { Plus } from 'lucide-react';
-import { useFetcher } from 'react-router';
+import { useEffect } from 'react';
+import toast from 'react-hot-toast';
+import { useFetcher, useParams } from 'react-router';
+import FieldError from '~/components/field-error';
 import { action as todosPageAction } from '~/routes/todos';
 import { TODOS_PRIORITIES } from '../constants';
 
@@ -19,8 +22,20 @@ import { TODOS_PRIORITIES } from '../constants';
  * Add todo component.
  */
 export default function AddTodo() {
+  const { userId } = useParams();
   const fetcher = useFetcher<typeof todosPageAction>();
-  const { isOpen, onOpen, onOpenChange } = useDisclosure();
+  const { isOpen, onOpen, onOpenChange, onClose } = useDisclosure();
+
+  useEffect(() => {
+    if (fetcher.data?.success) {
+      onClose();
+      toast.success('Todo added successfully');
+    }
+  }, [fetcher.data]);
+
+  const nameErrors = fetcher.data && fetcher.data.fieldErrors?.todoName;
+  const priorityErrors = fetcher.data && fetcher.data.fieldErrors?.todoPriority;
+  const addingTodo = fetcher.state !== 'idle';
 
   return (
     <>
@@ -43,30 +58,53 @@ export default function AddTodo() {
 
               <fetcher.Form method="post">
                 <ModalBody>
+                  <input
+                    name="action"
+                    id="action"
+                    type="hidden"
+                    value="addTodo"
+                  />
+
+                  <input
+                    name="userId"
+                    id="userId"
+                    type="hidden"
+                    value={userId}
+                  />
+
                   <div className="space-y-4">
                     <Input
-                      id="todo-name"
-                      name="todo-name"
+                      id="todoName"
+                      name="todoName"
                       placeholder="Todo name..."
                       autoComplete="off"
                       label="Todo name"
+                      isInvalid={!!nameErrors}
+                      errorMessage={
+                        nameErrors && <FieldError>{nameErrors[0]}</FieldError>
+                      }
                       isRequired
                     />
 
                     <Textarea
-                      id="todo-description"
-                      name="todo-description"
+                      id="todoDescription"
+                      name="todoDescription"
                       placeholder="Todo description..."
                       autoComplete="off"
                       label="Todo description"
                     />
 
                     <Select
-                      id="todo-priority"
-                      name="todo-priority"
+                      id="todoPriority"
+                      name="todoPriority"
                       placeholder="Todo priority..."
                       label="Todo priority"
-                      isRequired
+                      isInvalid={!!priorityErrors}
+                      errorMessage={
+                        priorityErrors && (
+                          <FieldError>{priorityErrors[0]}</FieldError>
+                        )
+                      }
                     >
                       {TODOS_PRIORITIES.map((priority) => (
                         <SelectItem key={priority.value}>
@@ -76,19 +114,22 @@ export default function AddTodo() {
                     </Select>
 
                     <DatePicker
-                      id="todo-deadline"
-                      name="todo-deadline"
+                      id="todoDeadline"
+                      name="todoDeadline"
                       label="Todo deadline"
                     />
                   </div>
                 </ModalBody>
 
                 <ModalFooter>
-                  <Button type="submit" onPress={onClose}>
-                    Cancel
-                  </Button>
+                  <Button onPress={onClose}>Cancel</Button>
 
-                  <Button type="submit" color="primary" fullWidth>
+                  <Button
+                    type="submit"
+                    color="primary"
+                    isLoading={addingTodo}
+                    fullWidth
+                  >
                     Save
                   </Button>
                 </ModalFooter>
