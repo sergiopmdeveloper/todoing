@@ -64,6 +64,13 @@ export default function DeleteTodo(todo: Todo) {
 
                 <fetcher.Form method="post">
                   <input
+                    name="action"
+                    id="action"
+                    type="hidden"
+                    value="deleteTodo"
+                  />
+
+                  <input
                     name="todoId"
                     id="todoId"
                     type="hidden"

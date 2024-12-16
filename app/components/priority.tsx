@@ -1,29 +1,38 @@
 import { Chip } from '@nextui-org/chip';
+import { TODOS_PRIORITIES } from '~/features/todos/constants';
 
 /**
  * Priority component.
  * @param {number} priority - The priority of the todo.
  */
 export default function Priority({ priority }: { priority: number }) {
-  if (priority === 1) {
-    return (
-      <Chip size="sm" color="danger">
-        High
-      </Chip>
-    );
-  }
+  let name = 'Unknown';
+  let color: 'primary' | 'warning' | 'danger' | 'secondary';
 
-  if (priority === 2) {
-    return (
-      <Chip size="sm" color="warning">
-        Medium
-      </Chip>
-    );
+  TODOS_PRIORITIES.forEach((priorityItem) => {
+    if (priorityItem.value === priority) {
+      name = priorityItem.name;
+    }
+  });
+
+  switch (priority) {
+    case 1:
+      color = 'danger';
+      break;
+    case 2:
+      color = 'warning';
+      break;
+    case 3:
+      color = 'primary';
+      break;
+    default:
+      color = 'secondary';
+      break;
   }
 
   return (
-    <Chip size="sm" color="primary">
-      Low
+    <Chip size="sm" color={color}>
+      {name}
     </Chip>
   );
 }

@@ -1,10 +1,10 @@
-import { Button } from '@nextui-org/button';
 import type { Todo } from '@prisma/client';
-import { Plus } from 'lucide-react';
 import { Toaster } from 'react-hot-toast';
 import { redirect } from 'react-router';
 import { getSessionData } from '~/features/shared/utils';
+import AddTodo from '~/features/todos/components/add-todo';
 import TodosTable from '~/features/todos/components/todos-table';
+import { validateAddTodoData } from '~/features/todos/validation';
 import Section from '~/layouts/section';
 import { session } from '~/utils/cookies';
 import { db } from '~/utils/prisma';
@@ -50,17 +50,54 @@ export async function loader({ request, params }: Route.LoaderArgs) {
  */
 export async function action({ request }: Route.ActionArgs) {
   const form = await request.formData();
-  const todoId = form.get('todoId') as string;
+  const action = form.get('action') as string;
 
-  await db.todo.delete({
-    where: {
-      id: todoId,
-    },
-  });
+  if (action === 'deleteTodo') {
+    const todoId = form.get('todoId') as string;
 
-  return {
-    success: true,
-  };
+    await db.todo.delete({
+      where: {
+        id: todoId,
+      },
+    });
+
+    return {
+      fieldErrors: {},
+      success: true,
+    };
+  }
+
+  if (action === 'addTodo') {
+    const todoUserId = form.get('userId') as string;
+    const todoName = form.get('todoName') as string;
+    const todoDescription = form.get('todoDescription') as string;
+    const todoPriority = form.get('todoPriority') as string;
+    const todoDeadline = new Date(form.get('todoDeadline') as string);
+
+    const { validationErrors } = validateAddTodoData({
+      todoName,
+      todoPriority,
+    });
+
+    if (Object.keys(validationErrors.fieldErrors).length > 0) {
+      return { ...validationErrors, success: false };
+    }
+
+    await db.todo.create({
+      data: {
+        name: todoName,
+        description: todoDescription === '' ? null : todoDescription,
+        priority: Number(todoPriority),
+        deadline: isNaN(todoDeadline.getTime()) ? null : todoDeadline,
+        userId: todoUserId,
+      },
+    });
+
+    return {
+      fieldErrors: {},
+      success: true,
+    };
+  }
 }
 
 /**
@@ -75,9 +112,7 @@ export default function Todos({ loaderData }: Route.ComponentProps) {
         <div className="mb-4 flex items-center justify-between">
           <h1 className="text-2xl">Your todos</h1>
 
-          <Button size="sm" color="primary" endContent={<Plus size={15} />}>
-            Add todo
-          </Button>
+          <AddTodo />
         </div>
 
         <TodosTable todos={todos} />
