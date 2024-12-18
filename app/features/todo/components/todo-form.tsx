@@ -12,9 +12,19 @@ import { TODOS_PRIORITIES } from '~/features/todos/constants';
  * Todo form component.
  */
 export default function TodoForm({ todo }: TodoFormProps) {
-  const [actualDeadline, setActualDeadline] = useState(
-    parseDate(format(todo.deadline || '', 'yyyy-MM-dd'))
-  );
+  const deadline = parseDate(format(todo.deadline || '', 'yyyy-MM-dd'));
+  const description = todo.description || '';
+
+  const [actualName, setActualName] = useState(todo.name);
+  const [actualDescription, setActualDescription] = useState(description);
+  const [actualPriority, setActualPriority] = useState(todo.priority);
+  const [actualDeadline, setActualDeadline] = useState(deadline);
+
+  const nameHasNotChanged = todo.name === actualName;
+  const descriptionHasNotChanged = description === actualDescription;
+  const priorityHasNotChanged = todo.priority === actualPriority;
+  const deadlineHasNotChanged =
+    deadline.toString() === actualDeadline.toString();
 
   return (
     <form method="post">
@@ -24,7 +34,8 @@ export default function TodoForm({ todo }: TodoFormProps) {
           name="todoName"
           placeholder="Todo name..."
           autoComplete="off"
-          defaultValue={todo.name}
+          defaultValue={actualName}
+          onChange={(event) => setActualName(event.target.value)}
           label="Name"
         />
 
@@ -32,7 +43,8 @@ export default function TodoForm({ todo }: TodoFormProps) {
           id="todoDescription"
           name="todoDescription"
           placeholder="Todo description..."
-          defaultValue={todo.description || ''}
+          defaultValue={actualDescription}
+          onChange={(event) => setActualDescription(event.target.value)}
           label="Todo description"
           rows={3}
           minRows={3}
@@ -43,7 +55,8 @@ export default function TodoForm({ todo }: TodoFormProps) {
           id="todoPriority"
           name="todoPriority"
           placeholder="Todo priority..."
-          defaultSelectedKeys={[String(todo.priority)]}
+          defaultSelectedKeys={[String(actualPriority)]}
+          onChange={(event) => setActualPriority(Number(event.target.value))}
           label="Todo priority"
         >
           {TODOS_PRIORITIES.map((priority) => (
@@ -60,7 +73,17 @@ export default function TodoForm({ todo }: TodoFormProps) {
         />
       </div>
 
-      <Button type="submit" color="primary" fullWidth>
+      <Button
+        type="submit"
+        color="primary"
+        isDisabled={
+          nameHasNotChanged &&
+          descriptionHasNotChanged &&
+          priorityHasNotChanged &&
+          deadlineHasNotChanged
+        }
+        fullWidth
+      >
         Save
       </Button>
     </form>
