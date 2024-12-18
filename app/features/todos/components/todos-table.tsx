@@ -9,6 +9,7 @@ import {
 } from '@nextui-org/table';
 import type { Todo } from '@prisma/client';
 import { format } from 'date-fns';
+import { Link, useParams } from 'react-router';
 import Priority from '~/components/priority';
 import DeleteTodo from './delete-todo';
 
@@ -18,6 +19,8 @@ import DeleteTodo from './delete-todo';
  * @param {Todo[]} props.todos - The todos to display.
  */
 export default function TodosTable({ todos }: TodosTableProps) {
+  const { userId } = useParams();
+
   return (
     <Table aria-label="Todos table">
       <TableHeader>
@@ -30,7 +33,14 @@ export default function TodosTable({ todos }: TodosTableProps) {
       <TableBody emptyContent={'No todos found.'}>
         {todos.map((todo, index) => (
           <TableRow key={index}>
-            <TableCell>{todo.name}</TableCell>
+            <TableCell>
+              <Link
+                className="hover:underline"
+                to={`/todos/${userId}/todo/${todo.id}`}
+              >
+                {todo.name}
+              </Link>
+            </TableCell>
 
             <TableCell>
               <Priority priority={todo.priority} />

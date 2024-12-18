@@ -6,4 +6,5 @@ export default [
   route('sign-out', 'routes/sign-out.tsx'),
   route('user/:userId', 'routes/user.tsx'),
   route('todos/:userId', 'routes/todos.tsx'),
+  route('todos/:userId/todo/:todoId', 'routes/todo.tsx'),
 ] satisfies RouteConfig;
