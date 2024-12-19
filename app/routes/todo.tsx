@@ -2,6 +2,7 @@ import type { Todo } from '@prisma/client';
 import { redirect } from 'react-router';
 import { getSessionData } from '~/features/shared/utils';
 import TodoForm from '~/features/todo/components/todo-form';
+import { validateAddTodoData as validateTodoData } from '~/features/todos/validation';
 import Section from '~/layouts/section';
 import { session } from '~/utils/cookies';
 import { db } from '~/utils/prisma';
@@ -43,6 +44,44 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   }
 
   return { ...todo };
+}
+
+/**
+ * Todo page server action.
+ * @param {Route.ActionArgs} request - The incoming request.
+ */
+export async function action({ request }: Route.ActionArgs) {
+  const form = await request.formData();
+  const userId = form.get('userId') as string;
+  const todoId = form.get('todoId') as string;
+  const todoName = form.get('todoName') as string;
+  const todoDescription = form.get('todoDescription') as string;
+  const todoPriority = form.get('todoPriority') as string;
+  const todoDeadline = new Date(form.get('todoDeadline') as string);
+
+  const { validationErrors } = validateTodoData({
+    todoName,
+    todoPriority,
+  });
+
+  if (Object.keys(validationErrors.fieldErrors).length > 0) {
+    return { ...validationErrors };
+  }
+
+  await db.todo.update({
+    where: {
+      id: todoId,
+      userId: userId,
+    },
+    data: {
+      name: todoName,
+      description: todoDescription ? todoDescription : null,
+      priority: Number(todoPriority),
+      deadline: isNaN(todoDeadline.getTime()) ? null : todoDeadline,
+    },
+  });
+
+  return redirect(`/todos/${userId}?detail=todo-updated`);
 }
 
 /**

@@ -6,7 +6,10 @@ import { Select, SelectItem } from '@nextui-org/select';
 import type { Todo } from '@prisma/client';
 import { format } from 'date-fns';
 import { useState } from 'react';
+import { useFetcher, useParams } from 'react-router';
+import FieldError from '~/components/field-error';
 import { TODOS_PRIORITIES } from '~/features/todos/constants';
+import { action as todoPageAction } from '~/routes/todo';
 
 /**
  * Todo form component.
@@ -15,6 +18,8 @@ export default function TodoForm({ todo }: TodoFormProps) {
   const deadline = parseDate(format(todo.deadline || '', 'yyyy-MM-dd'));
   const description = todo.description || '';
 
+  const fetcher = useFetcher<typeof todoPageAction>();
+  const { userId, todoId } = useParams();
   const [actualName, setActualName] = useState(todo.name);
   const [actualDescription, setActualDescription] = useState(description);
   const [actualPriority, setActualPriority] = useState(todo.priority);
@@ -26,9 +31,17 @@ export default function TodoForm({ todo }: TodoFormProps) {
   const deadlineHasNotChanged =
     deadline.toString() === actualDeadline.toString();
 
+  const nameErrors = fetcher.data?.fieldErrors.todoName;
+  const priorityErrors = fetcher.data?.fieldErrors.todoPriority;
+
+  const editingTodo = fetcher.state !== 'idle';
+
   return (
-    <form method="post">
+    <fetcher.Form method="post">
       <div className="mb-4 space-y-4">
+        <input id="userId" name="userId" type="hidden" value={userId} />
+        <input id="todoId" name="todoId" type="hidden" value={todoId} />
+
         <Input
           id="todoName"
           name="todoName"
@@ -37,6 +50,8 @@ export default function TodoForm({ todo }: TodoFormProps) {
           defaultValue={actualName}
           onChange={(event) => setActualName(event.target.value)}
           label="Name"
+          isInvalid={!!nameErrors}
+          errorMessage={nameErrors && <FieldError>{nameErrors[0]}</FieldError>}
         />
 
         <Textarea
@@ -58,6 +73,10 @@ export default function TodoForm({ todo }: TodoFormProps) {
           defaultSelectedKeys={[String(actualPriority)]}
           onChange={(event) => setActualPriority(Number(event.target.value))}
           label="Todo priority"
+          isInvalid={!!priorityErrors}
+          errorMessage={
+            priorityErrors && <FieldError>{priorityErrors[0]}</FieldError>
+          }
         >
           {TODOS_PRIORITIES.map((priority) => (
             <SelectItem key={priority.value}>{priority.name}</SelectItem>
@@ -82,11 +101,12 @@ export default function TodoForm({ todo }: TodoFormProps) {
           priorityHasNotChanged &&
           deadlineHasNotChanged
         }
+        isLoading={editingTodo}
         fullWidth
       >
         Save
       </Button>
-    </form>
+    </fetcher.Form>
   );
 }
 
