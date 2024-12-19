@@ -1,6 +1,7 @@
 import type { Todo } from '@prisma/client';
-import { Toaster } from 'react-hot-toast';
-import { redirect } from 'react-router';
+import { useEffect } from 'react';
+import toast, { Toaster } from 'react-hot-toast';
+import { redirect, useSearchParams } from 'react-router';
 import { getSessionData } from '~/features/shared/utils';
 import AddTodo from '~/features/todos/components/add-todo';
 import TodosTable from '~/features/todos/components/todos-table';
@@ -104,7 +105,22 @@ export async function action({ request }: Route.ActionArgs) {
  * Todos page.
  */
 export default function Todos({ loaderData }: Route.ComponentProps) {
+  const [searchParams, setSearchParams] = useSearchParams();
+
   const todos = loaderData as Todo[];
+
+  useEffect(() => {
+    const detail = searchParams.get('detail');
+
+    if (detail === 'todo-updated') {
+      const newSearchParams = new URLSearchParams(searchParams);
+      newSearchParams.delete('detail');
+
+      setSearchParams(newSearchParams, { replace: true });
+
+      toast.success('Todo edited successfully');
+    }
+  }, []);
 
   return (
     <main>
